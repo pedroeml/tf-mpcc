@@ -24,6 +24,15 @@ type SinglyLinkedList struct {
 	size int
 }
 
+type Iterator interface {
+	hasNext() bool
+	next() interface{}
+}
+
+type ListIterator struct {
+	current *Node
+}
+
 // Initializes or clears list l.
 func (l *SinglyLinkedList) Init() *SinglyLinkedList {
 	l.head.next = nil
@@ -145,4 +154,30 @@ func (l *SinglyLinkedList) String() string {
 
 	buffer.WriteString("]")
 	return buffer.String()
+}
+
+
+func (l *SinglyLinkedList) Iterator() ListIterator {
+	return ListIterator{current: l.head.next}
+}
+
+func (it *ListIterator) hasNext() bool {
+	if it.current != nil {
+		return true
+	}
+	return false
+}
+
+func (it *ListIterator) next() interface{} {
+	v := it.current.Value
+	it.current = it.current.next
+	return v
+}
+
+func HasNext(it Iterator) bool {
+	return it.hasNext()
+}
+
+func Next(it Iterator) interface{} {
+	return it.next()
 }
