@@ -21,6 +21,7 @@ func (n *Node) Next() *Node {
 
 type SinglyLinkedList struct {
 	head Node
+	last *Node
 	size int
 }
 
@@ -64,13 +65,7 @@ func (l *SinglyLinkedList) Last() *Node {
 		return nil
 	}
 
-	var n *Node
-
-	for n = l.head.next; n.next != nil; n = n.next {
-
-	}
-
-	return n
+	return l.last
 }
 
 // Inserts a new node next to the node at, increments l.size and returns the inserted node.
@@ -92,10 +87,11 @@ func (l *SinglyLinkedList) insertValue(v interface{}, at *Node) *Node {
 func (l *SinglyLinkedList) Push(v interface{}) {
 	var last = l.Last()
 	if last == nil {
-		l.insertValue(v, &l.head)
+		last = l.insertValue(v, &l.head)
 	} else {
-		l.insertValue(v, last)
+		last = l.insertValue(v, last)
 	}
+	l.last = last
 }
 
 // Removes node from its list, decrements l.size and returns the removed node.
@@ -111,12 +107,17 @@ func (l *SinglyLinkedList) remove(node *Node) *Node {
 	node.next = nil // avoid memory leaks
 	node.list = nil
 	l.size--
+	if previous.next == nil {
+		l.last = previous
+	} else {
+		l.last = previous.next
+	}
 	return node
 }
 
 // Removes node from list l and returns it's value.
 func (l *SinglyLinkedList) Remove(node *Node) interface{} {
-	if node.list == l {
+	if node.list == l && l.size != 0 {
 		l.remove(node)
 	}
 	return node.Value
