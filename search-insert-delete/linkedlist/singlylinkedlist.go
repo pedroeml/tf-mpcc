@@ -117,10 +117,10 @@ func (l *SinglyLinkedList) remove(node *Node) *Node {
 
 // Removes node from list l and returns it's value.
 func (l *SinglyLinkedList) Remove(node *Node) interface{} {
-	if node.list == l && l.size != 0 {
-		l.remove(node)
+	if l.size != 0 && node.list == l {
+		return l.remove(node).Value
 	}
-	return node.Value
+	return nil
 }
 
 // Removes the list l's last node and returns it's value.
