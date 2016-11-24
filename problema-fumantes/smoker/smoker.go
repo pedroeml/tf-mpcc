@@ -52,11 +52,7 @@ func (s *Smoker) NeedsMatches() bool {
 }
 
 func (s *Smoker) needsIngredient(kind int) bool {
-	if s.kind != kind {
-		return true
-	}
-
-	return false
+	return s.kind != kind
 }
 
 // Sets the first ingredient this object needs.
@@ -77,8 +73,6 @@ func (s *Smoker) setIngredient(ing *ingredient.Ingredient, index int) {
 // Performs the removal of two different ingredients this object has.
 func (s *Smoker) Smoke() bool {
 	if s.ingredients[0] != nil && s.ingredients[1] != nil {
-		s.ingredients[0].TakeIngredient()
-		s.ingredients[1].TakeIngredient()
 		s.ingredients[0] = nil
 		s.ingredients[1] = nil
 		fmt.Printf("%s SMOKED\n", s.name)

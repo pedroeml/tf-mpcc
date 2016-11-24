@@ -2,9 +2,9 @@ package agent
 
 import (
 	"../ingredient"
-	"time"
 	"math/rand"
 	"fmt"
+	"sync"
 )
 
 type Agent struct {
@@ -13,9 +13,9 @@ type Agent struct {
 
 func (a *Agent) Init() *Agent {
 	var ingredients [3]*ingredient.Ingredient
-	ingredients[0] = ingredient.New("Tabacco")
-	ingredients[1] = ingredient.New("Paper")
-	ingredients[2] = ingredient.New("Matches")
+	ingredients[0] = nil
+	ingredients[1] = nil
+	ingredients[2] = nil
 	a.ingredients = ingredients
 	return a
 }
@@ -37,48 +37,58 @@ func (a *Agent) ThereIsMatches() bool {
 }
 
 func (a *Agent) thereIsIngredient(index int) bool {
-	return a.ingredients[index].Quantity() != 0
+	return a.ingredients[index] != nil
 }
 
-func (a *Agent) SellTabacco() *ingredient.Ingredient {
-	return a.sellIngredient(0)
+func (a *Agent) SellTabacco() {
+	a.sellIngredient(0)
 }
 
-func (a *Agent) SellPaper() *ingredient.Ingredient {
-	return a.sellIngredient(1)
+func (a *Agent) SellPaper() {
+	a.sellIngredient(1)
 }
 
-func (a *Agent) SellMatches() *ingredient.Ingredient {
-	return a.sellIngredient(2)
+func (a *Agent) SellMatches() {
+	a.sellIngredient(2)
 }
 
-func (a *Agent) sellIngredient(index int) *ingredient.Ingredient {
+func (a *Agent) sellIngredient(index int) {
 	if a.thereIsIngredient(index) {
 		fmt.Printf("Agent SOLD %s\n", a.ingredients[index].Name())
-		return a.ingredients[index].TakeIngredient()
+		a.ingredients[index] = nil
 	}
-	return nil
 }
 
 // Add more two ingedients to sell if there is no ingredient left to sell.
-func (a *Agent) AddIngredients() bool {
+func (a *Agent) AddIngredients(ch chan *ingredient.Ingredient, wg *sync.WaitGroup) {
 	if !a.ThereIsTabacco() && !a.ThereIsPaper() && !a.ThereIsMatches() {
-		s1 := rand.NewSource(time.Now().UnixNano())
-		r1 := rand.New(s1)
-
-		indexA := r1.Intn(3)
-		indexB := r1.Intn(3)
+		indexA := rand.Intn(3)
+		indexB := rand.Intn(3)
 
 		if indexA == indexB {	// indexes must be different because two different ingredients need to be increased their quantity
-			return a.AddIngredients()
+			a.AddIngredients(ch, wg)
+		} else {
+			a.ingredients[indexA] = createIngredient(indexA)
+			fmt.Printf("Agent NOW HAS %s\n", a.ingredients[indexA].Name())
+			ch <- a.ingredients[indexA]
+
+			a.ingredients[indexB] = createIngredient(indexB)
+			fmt.Printf("Agent NOW HAS %s\n", a.ingredients[indexB].Name())
+			ch <- a.ingredients[indexB]
+
+			wg.Done()
 		}
-
-		a.ingredients[indexA].IncrementQuantity()
-		fmt.Printf("Agent NOW HAS %s\n", a.ingredients[indexA].Name())
-		a.ingredients[indexB].IncrementQuantity()
-		fmt.Printf("Agent NOW HAS %s\n", a.ingredients[indexB].Name())
-		return true
 	}
+}
 
-	return false
+func createIngredient(index int) *ingredient.Ingredient {
+	switch index {
+	case 0:
+		return ingredient.New("Tabacco")
+	case 1:
+		return ingredient.New("Paper")
+	case 2:
+		return ingredient.New("Matches")
+	}
+	return nil
 }
