@@ -1,0 +1,13 @@
+channel search, insert, delete
+
+-- searchers run at the same time
+searchers = (search [] search) -> searchers
+
+-- inserters don't run at the same time
+inserts = (insert |~| insert) -> inserters
+
+-- deleters don't run at the same time
+deleters = (delete |~| delete) -> deleters
+
+-- searchers can run with inserters at the same time but deleters run in mutex
+list = ((searchers [] inserts) |~| deleters) -> list
