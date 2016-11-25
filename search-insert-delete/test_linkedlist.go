@@ -13,45 +13,19 @@ func main() {
 	var wg = &sync.WaitGroup{}
 	l := linkedlist.New()
 
-	//l.Push("A")
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//l.Push("B")
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//l.Push(10)
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//l.Push(3.1415)
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//
-	//
-	//for it := l.Iterator(); linkedlist.HasNext(&it); {
-	//	var e interface{} = linkedlist.Next(&it)
-	//	fmt.Println(e)
-	//}
-	//
-	//l.Pop()
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//l.Pop()
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//l.Pop()
-	//fmt.Println(l)
-	//fmt.Printf("last = %s\n", l.Last().Value)
-	//l.Pop()
-	//fmt.Println(l)
-
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		l.Push(rand.Intn(10))
 	}
 	fmt.Println("LIST: ", l)
-	testInserters(l, ch, mutex, wg)
+
+	//testSearchers(l, wg)
+	//testInserters(l, ch, mutex, wg)
+	//testDeleters(l, ch, mutex, wg)
+	test(l, ch, mutex, wg)
 }
 
-func testInserters(l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *sync.Mutex, wg *sync.WaitGroup) {
+func test(l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *sync.Mutex, wg *sync.WaitGroup) {
+	fmt.Println("\nSEARCH-INSERT-DELETE\n")
 	times := 5
 
 	for i := 0; i < times; i++ {
@@ -85,10 +59,70 @@ func testInserters(l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *s
 	wg2.Wait()
 }
 
+func testSearchers(l *linkedlist.SinglyLinkedList, wg *sync.WaitGroup) {
+	fmt.Println("\nSEARCH\n")
+	times := 5
+
+	wg2 := sync.WaitGroup{}
+	wg2.Add(1)
+	go func() {
+		for i := 0; i < times; i++ {
+			wg.Add(1)
+			go search(i, l, wg)
+		}
+
+		wg.Wait()
+		wg2.Done()
+	}()
+
+	wg2.Wait()
+}
+
+func testInserters(l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *sync.Mutex, wg *sync.WaitGroup) {
+	fmt.Println("\nINSERT\n")
+	times := 5
+
+	for i := 0; i < times; i++ {
+		ch <- rand.Intn(10)
+	}
+
+	wg2 := sync.WaitGroup{}
+	wg2.Add(1)
+	go func() {
+		for i := 0; i < times; i++ {
+			wg.Add(1)
+			go insert(i, l, ch, mutex, wg)
+		}
+
+		wg.Wait()
+		wg2.Done()
+	}()
+
+	wg2.Wait()
+}
+
+func testDeleters(l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *sync.Mutex, wg *sync.WaitGroup) {
+	fmt.Println("\nDELETE\n")
+	times := 5
+
+	wg2 := sync.WaitGroup{}
+	wg2.Add(1)
+	go func() {
+		for i := 0; i < times; i++ {
+			wg.Add(1)
+			go delete(i, l, ch, mutex, wg)
+		}
+
+		wg.Wait()
+		wg2.Done()
+	}()
+
+	wg2.Wait()
+}
 
 func delete(deleterID int, l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *sync.Mutex, wg *sync.WaitGroup) {
-	fmt.Println(">>> DELETER ", deleterID, " STARTED WORKING...")
 	mutex.Lock()
+	fmt.Println(">>> DELETER ", deleterID, " STARTED WORKING...")
 	elem := l.Pop()
 	if elem != nil {
 		ch <- elem
@@ -99,9 +133,9 @@ func delete(deleterID int, l *linkedlist.SinglyLinkedList, ch chan interface{}, 
 }
 
 func insert(inserterID int, l *linkedlist.SinglyLinkedList, ch chan interface{}, mutex *sync.Mutex, wg *sync.WaitGroup) {
+	mutex.Lock()
 	fmt.Println(">>> INSERTER ", inserterID, " STARTED WORKING...")
 	elem := <- ch
-	mutex.Lock()
 	l.Push(elem)
 	fmt.Println("#", inserterID, "INSERTED: ", elem, " LIST: ", l)
 	mutex.Unlock()
