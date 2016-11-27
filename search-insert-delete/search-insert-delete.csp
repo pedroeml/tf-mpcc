@@ -1,13 +1,22 @@
-channel search, insert, delete
 
--- searchers run at the same time
-searchers = (search [] search) -> searchers
+Threads = {0..1}
 
--- inserters don't run at the same time
-inserts = (insert |~| insert) -> inserters
+channel search
+channel insert, requireToInsert, delete, requireToDelete:Threads
 
--- deleters don't run at the same time
-deleters = (delete |~| delete) -> deleters
+-- run searcher, insert or delete
+SINGLYLINKEDLIST(i) = (search -> SINGLYLINKEDLIST(i))
+    [] (insert.i -> SINGLYLINKEDLIST(i))
+    [] (delete.i -> SINGLYLINKEDLIST(i))
 
--- searchers can run with inserters at the same time but deleters run in mutex
-list = ((searchers [] inserts) |~| deleters) -> list
+-- 0 means that there is a requirement for insert or delete, or just a search
+-- anything else means it's the requirement value to insert or delete
+MUTEX(i) = if i == 0 then
+        (search -> MUTEX(0)) [] (requireToInsert?x -> MUTEX(x)) [] (requireToDelete?x -> MUTEX(x))
+    else
+        (insert.i -> MUTEX(0)) [] (delete.i -> MUTEX(0))
+
+-- performs search, insert requirement and insert or delete requirement and delete
+THREAD(i) = (search -> THREAD(i))
+    [] (requireToInsert!i -> insert.i -> THREAD(i))
+    [] (requireToDelete!i -> delete.i -> THREAD(i))
