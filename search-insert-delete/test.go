@@ -43,7 +43,7 @@ func testSearchInsertDelete(l *linkedlist.SinglyLinkedList, ch chan interface{},
 	inserterExecutedOnce := false
 	deleterExecutedOnce := false
 
-	for i := 0; !(searcherExecutedOnce && inserterExecutedOnce && deleterExecutedOnce) && i < times*2; i++ {	// this condition requires that all sort of thread (searcher, inserter and deleter) need to run at least once.
+	for i := 0; !(searcherExecutedOnce && inserterExecutedOnce && deleterExecutedOnce) || i < times*2; i++ {	// this condition requires that all sort of thread (searcher, inserter and deleter) need to run at least once.
 		switch rand.Intn(3) {
 		case 0:
 			searcherExecutedOnce = true
