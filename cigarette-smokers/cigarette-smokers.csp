@@ -1,0 +1,15 @@
+datatype Combinations = TabaccoAndPaper | TabaccoAndLighter | PaperAndLighter
+channel dispose, pick, smoke, smoked:Combinations
+
+-- if the current pair what the smoker needs, then he smokes.
+SMOKERTABACCO(pair) = if pair == PaperAndLighter then pick!pair -> smoke?pair -> SKIP else SKIP
+SMOKERPAPER(pair) = if pair == TabaccoAndLighter then pick!pair -> smoke?pair -> SKIP else SKIP
+SMOKERLIGHTER(pair) = if pair == TabaccoAndPaper then pick!pair -> smoke?pair -> SKIP else SKIP
+
+-- all smokers will try to smoke if agent is disposing the necessary ingredients to one of them smoke.
+SMOKING(pair) = (SMOKERTABACCO(pair) [] SMOKERPAPER(pair) [] SMOKERLIGHTER(pair)) -> smoked!pair -> SKIP
+
+-- dispose a pair of ingredients then the smokers will try to smoke.
+AGENT(pair) = dispose?pair -> SMOKING(pair) -> SKIP
+
+RUN = AGENT(TabaccoAndPaper) -> AGENT(TabaccoAndLighter) -> AGENT(PaperAndLighter) -> RUN
